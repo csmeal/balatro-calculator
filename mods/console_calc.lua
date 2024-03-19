@@ -583,11 +583,7 @@ table.insert(mods,
                 function(args)
                     if #G.hand.highlighted == 0 then return true end
                     console.logger:info("hello")
-                    console.logger:info(#G.play.cards)
-                    console.logger:info(#G.hand.cards)
-                    console.logger:info(#G.hand.highlighted)
-                    console.logger:info(G.hand.highlighted[1].base.suit)
-                    console.logger:info(G.hand.highlighted[1].base.rank)
+                
 
                     -- delay(10)
                     local text,disp_text,poker_hands,scoring_hand,non_loc_disp_text = G.FUNCS.get_poker_hand_info(G.hand.highlighted)
@@ -596,20 +592,20 @@ table.insert(mods,
                     -- console.logger:info(poker_hands)
                     -- console.logger:info(scoring_hand)
                     -- console.logger:info(non_loc_disp_text)
-
+                    local candidate_played = G.hand.highlighted
                     local pures = {}
-                    for i=1, #G.hand.highlighted do
+                    for i=1, #candidate_played do
                         if next(find_joker('Splash')) then
-                            scoring_hand[i] = G.hand.highlighted[i]
+                            scoring_hand[i] = candidate_played[i]
                         else
-                            if G.hand.highlighted[i].ability.effect == 'Stone Card' then
+                            if candidate_played[i].ability.effect == 'Stone Card' then
                                 local inside = false
                                 for j=1, #scoring_hand do
-                                    if scoring_hand[j] == G.hand.highlighted[i] then
+                                    if scoring_hand[j] == candidate_played[i] then
                                         inside = true
                                     end
                                 end
-                                if not inside then table.insert(pures, G.hand.highlighted[i]) end
+                                if not inside then table.insert(pures, candidate_played[i]) end
                             end
                         end
                     end
@@ -618,12 +614,183 @@ table.insert(mods,
                         table.insert(scoring_hand, pures[i])
                     end
 
-                    console.logger:info(#scoring_hand)
+                    console.logger:info(string.format("a total of %d cards will be scored", #scoring_hand))
 
                     table.sort(scoring_hand, function (a, b) return a.T.x < b.T.x end )
+                    -- TODO bring in boss debuffs
+                    -- if not G.GAME.blind:debuff_hand(G.play.cards, poker_hands, text) then
+                    -- this code get the current multiplier for the hand
+
+                    -- NOTE - this gets the multiplier of the hand being played, i.e. flush, straight, etc.
+                    -- this does NOT include the cards.  "hand_chips" does not include the value of the played cards (Ace, 3, king, etc.)
+                    local mult = mod_mult(G.GAME.hands[text].mult)
+                    local hand_chips = mod_chips(G.GAME.hands[text].chips)
 
 
+                    -- not necessart
+                    -- check_for_unlock({type = 'hand', handname = text, disp_text = non_loc_disp_text, scoring_hand = scoring_hand, full_hand = G.play.cards})
                     
+                    -- not necessary 
+                    -- if G.GAME.first_used_hand_level and G.GAME.first_used_hand_level > 0 then
+                    --     level_up_hand(G.deck.cards[1], text, nil, G.GAME.first_used_hand_level)
+                    --     G.GAME.first_used_hand_level = nil
+                    -- end
+                    
+                    -- I dont think we need this, as it appears to just be UI code
+                    -- for i=1, #G.jokers.cards do
+                    --     --calculate the joker effects
+                    --     local effects = eval_card(G.jokers.cards[i], {cardarea = G.jokers, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, before = true})
+                    --     if effects.jokers then
+                    --         card_eval_status_text(G.jokers.cards[i], 'jokers', nil, percent, nil, effects.jokers)
+                    --         percent = percent + percent_delta
+                            
+                    --         -- if effects.jokers.level_up then
+                    --         --     level_up_hand(G.jokers.cards[i], text)
+                    --         -- end
+                    --     end
+                    -- end
+
+                    -- this is just for the blind "The Flint" which halves your chips
+                    local modded = false
+                    mult, hand_chips, modded = G.GAME.blind:modify_hand(candidate_played, poker_hands, text, mult, hand_chips)
+                    -- this is specifically for the "Rich get Richer" achievement
+                    -- for now disable
+                    -- hand_chips = mod_chips(hand_chips)
+                    
+                    for i=1, #scoring_hand do
+                        --add cards played to list
+                        -- if scoring_hand[i].ability.effect ~= 'Stone Card' then 
+                        --     G.GAME.cards_played[scoring_hand[i].base.value].total = G.GAME.cards_played[scoring_hand[i].base.value].total + 1
+                        --     G.GAME.cards_played[scoring_hand[i].base.value].suits[scoring_hand[i].base.suit] = true 
+                        -- end
+                        --if card is debuffed
+                        -- if scoring_hand[i].debuff then
+                        --     G.GAME.blind.triggered = true
+                        --     G.E_MANAGER:add_event(Event({
+                        --         trigger = 'immediate',
+                        --         func = (function() G.HUD_blind:get_UIE_by_ID('HUD_blind_debuff_1'):juice_up(0.3, 0)
+                        --             G.HUD_blind:get_UIE_by_ID('HUD_blind_debuff_2'):juice_up(0.3, 0)
+                        --             G.GAME.blind:juice_up();return true end)
+                        --     }))
+                        --     card_eval_status_text(scoring_hand[i], 'debuff')
+                        if true then
+                            --Check for play doubling
+                            local reps = {1}
+                            
+                            --From Red seal
+                            local eval = eval_card(scoring_hand[i], {repetition_only = true,cardarea = G.play, full_hand = candidate_played, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true})
+                            if next(eval) then 
+                                for h = 1, eval.seals.repetitions do
+                                    reps[#reps+1] = eval
+                                end
+                            end
+                            --From jokers
+                            for j=1, #G.jokers.cards do
+                                --calculate the joker effects
+                                local eval = eval_card(G.jokers.cards[j], {cardarea = G.play, full_hand =candidate_played, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], repetition = true})
+                                if next(eval) and eval.jokers then 
+                                    for h = 1, eval.jokers.repetitions do
+                                        reps[#reps+1] = eval
+                                    end
+                                end
+                            end
+                            for j=1,#reps do
+                                -- percent = percent + percent_delta
+                                -- if reps[j] ~= 1 then
+                                --     card_eval_status_text((reps[j].jokers or reps[j].seals).card, 'jokers', nil, nil, nil, (reps[j].jokers or reps[j].seals))
+                                -- end
+                                
+                                --calculate the hand effects
+                                local effects = {eval_card(scoring_hand[i], {cardarea = G.play, full_hand = candidate_played, scoring_hand = scoring_hand, poker_hand = text})}
+                                for k=1, #G.jokers.cards do
+                                    --calculate the joker individual card effects
+                                    local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.play, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], individual = true})
+                                    if eval then 
+                                        table.insert(effects, eval)
+                                    end
+                                end
+                                scoring_hand[i].lucky_trigger = nil
+            
+                                for ii = 1, #effects do
+                                    --If chips added, do chip add event and add the chips to the total
+                                    if effects[ii].chips then 
+                                        -- UI effect only
+                                        -- if effects[ii].card then juice_card(effects[ii].card) end
+                                        hand_chips = mod_chips(hand_chips + effects[ii].chips)
+                                        -- update_hand_text({delay = 0}, {chips = hand_chips})
+                                        -- card_eval_status_text(scoring_hand[i], 'chips', effects[ii].chips, percent)
+                                    end
+            
+                                    --If mult added, do mult add event and add the mult to the total
+                                    if effects[ii].mult then 
+                                        -- if effects[ii].card then juice_card(effects[ii].card) end
+                                        mult = mod_mult(mult + effects[ii].mult)
+                                        -- update_hand_text({delay = 0}, {mult = mult})
+                                        -- card_eval_status_text(scoring_hand[i], 'mult', effects[ii].mult, percent)
+                                    end
+            
+                                    --If play dollars added, add dollars to total
+                                    -- if effects[ii].p_dollars then 
+                                    --     if effects[ii].card then juice_card(effects[ii].card) end
+                                    --     ease_dollars(effects[ii].p_dollars)
+                                    --     -- card_eval_status_text(scoring_hand[i], 'dollars', effects[ii].p_dollars, percent)
+                                    -- end
+            
+            
+                                    --Any extra effects
+                                    if effects[ii].extra then 
+                                        -- if effects[ii].card then juice_card(effects[ii].card) end
+                                        local extras = {mult = false, hand_chips = false}
+                                        if effects[ii].extra.mult_mod then mult =mod_mult( mult + effects[ii].extra.mult_mod);extras.mult = true end
+                                        if effects[ii].extra.chip_mod then hand_chips = mod_chips(hand_chips + effects[ii].extra.chip_mod);extras.hand_chips = true end
+                                        if effects[ii].extra.swap then 
+                                            local old_mult = mult
+                                            mult = mod_mult(hand_chips)
+                                            hand_chips = mod_chips(old_mult)
+                                            extras.hand_chips = true; extras.mult = true
+                                        end
+                                        -- update_hand_text({delay = 0}, {chips = extras.hand_chips and hand_chips, mult = extras.mult and mult})
+                                        -- card_eval_status_text(scoring_hand[i], 'extra', nil, percent, nil, effects[ii].extra)
+                                    end
+            
+                                    --If x_mult added, do mult add event and mult the mult to the total
+                                    if effects[ii].x_mult then 
+                                        -- if effects[ii].card then juice_card(effects[ii].card) end
+                                        mult = mod_mult(mult*effects[ii].x_mult)
+                                        -- update_hand_text({delay = 0}, {mult = mult})
+                                        -- card_eval_status_text(scoring_hand[i], 'x_mult', effects[ii].x_mult, percent)
+                                    end
+            
+                                    --calculate the card edition effects
+                                    if effects[ii].edition then
+                                        hand_chips = mod_chips(hand_chips + (effects[ii].edition.chip_mod or 0))
+                                        mult = mult + (effects[ii].edition.mult_mod or 0)
+                                        mult = mod_mult(mult*(effects[ii].edition.x_mult_mod or 1))
+                                        -- update_hand_text({delay = 0}, {
+                                        --     chips = effects[ii].edition.chip_mod and hand_chips or nil,
+                                        --     mult = (effects[ii].edition.mult_mod or effects[ii].edition.x_mult_mod) and mult or nil,
+                                        -- })
+                                        -- card_eval_status_text(scoring_hand[i], 'extra', nil, percent, nil, {
+                                        --     message = (effects[ii].edition.chip_mod and localize{type='variable',key='a_chips',vars={effects[ii].edition.chip_mod}}) or
+                                        --             (effects[ii].edition.mult_mod and localize{type='variable',key='a_mult',vars={effects[ii].edition.mult_mod}}) or
+                                        --             (effects[ii].edition.x_mult_mod and localize{type='variable',key='a_xmult',vars={effects[ii].edition.x_mult_mod}}),
+                                        --     chip_mod =  effects[ii].edition.chip_mod,
+                                        --     mult_mod =  effects[ii].edition.mult_mod,
+                                        --     x_mult_mod =  effects[ii].edition.x_mult_mod,
+                                        --     colour = G.C.DARK_EDITION,
+                                        --     edition = true})
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    console.logger:info(string.format("non-multi chip count is:  %d", hand_chips))
+                    console.logger:info(string.format("total multiplier is :  %d", mult))
+                    console.logger:info(string.format("total multiplier is :  %d", mult))
+
+
+
                     return true
                 end,
                 "Change the player's remaining hands",
