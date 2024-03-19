@@ -584,6 +584,19 @@ table.insert(mods,
                     return nil
                 end
             )
+            -----------
+            -- Calc command:
+            --  Took the bulk of this code from state_events.evaluate_play, which takes cards from play and scores them
+            --  A few changes made include setting up an "artificial play" area (candidatePlayed) to evaluate, as when a card is "played", it is 
+            -- first moved into the play area (and out of the and).
+            -- Therefore, an artificial hand of the non highlighted cards was also created (unhighlightedHand)
+            -- Additionally, we have to remove all code that alters a joker (Square, Supernove, etc.), card (Glass), hand (upgrading), or money.
+            -- For example do not increment Supernove, but add an additional counter to the multi_mod to account for its increment.
+            -- All UI code elements were removed, including delay, card_eval_status_text, mod_percent, update_hand_text, etc.
+            -- Finally, all event triggers (mostly UI) were removed.
+            -- 
+            -- TODO: Need to account for objects upgrades which upgrade when they area, but not apply them to the object self.  Supernova is handled, but there are more.
+            -----------
             registerCommand(
                 "calc",
                 function(args)
