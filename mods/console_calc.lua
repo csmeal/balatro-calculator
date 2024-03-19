@@ -2,6 +2,8 @@ local utf8 = require("utf8")
 local LINE_HEIGHT = 20
 local math = require('math')
 
+
+
 local console = {
     logger = getLogger("dev_console"),
     log_level = "INFO",
@@ -21,6 +23,10 @@ local console = {
         alt = false,
         meta = false,
     },
+
+    calc_joker = function(self)
+        console.logger:info("hello")
+    end,
     toggle = function(self)
         self.is_open = not self.is_open
         love.keyboard.setKeyRepeat(self.is_open)  -- set key repeat to true when console is open
@@ -579,33 +585,35 @@ table.insert(mods,
                 end
             )
             registerCommand(
-                "test",
+                "calc",
                 function(args)
                     if #G.hand.highlighted == 0 then return true end
+                    
                     console.logger:info("hello")
+                    -- first set our candidate hand and unhighlightedHand
+                    -- this is necesary, bc normally the cards are removed from the hand before being played
+                    -- we do not have that luxury, therefore we must setup an artificial hand and played hand
+                    local candidatePlayed = G.hand.highlighted
+                    local unhighlightedHand = {}
+                    for i=1, #G.hand.cards do
+                        if not G.hand.cards[i].highlighted then table.insert(unhighlightedHand, G.hand.cards[i]) end
+                    end
                 
-
-                    -- delay(10)
                     local text,disp_text,poker_hands,scoring_hand,non_loc_disp_text = G.FUNCS.get_poker_hand_info(G.hand.highlighted)
-                    console.logger:info(text)
-                    console.logger:info(disp_text)
-                    -- console.logger:info(poker_hands)
-                    -- console.logger:info(scoring_hand)
-                    -- console.logger:info(non_loc_disp_text)
-                    local candidate_played = G.hand.highlighted
+
                     local pures = {}
-                    for i=1, #candidate_played do
+                    for i=1, #candidatePlayed do
                         if next(find_joker('Splash')) then
-                            scoring_hand[i] = candidate_played[i]
+                            scoring_hand[i] = candidatePlayed[i]
                         else
-                            if candidate_played[i].ability.effect == 'Stone Card' then
+                            if candidatePlayed[i].ability.effect == 'Stone Card' then
                                 local inside = false
                                 for j=1, #scoring_hand do
-                                    if scoring_hand[j] == candidate_played[i] then
+                                    if scoring_hand[j] == candidatePlayed[i] then
                                         inside = true
                                     end
                                 end
-                                if not inside then table.insert(pures, candidate_played[i]) end
+                                if not inside then table.insert(pures, candidatePlayed[i]) end
                             end
                         end
                     end
@@ -627,36 +635,17 @@ table.insert(mods,
                     local hand_chips = mod_chips(G.GAME.hands[text].chips)
 
 
-                    -- not necessart
-                    -- check_for_unlock({type = 'hand', handname = text, disp_text = non_loc_disp_text, scoring_hand = scoring_hand, full_hand = G.play.cards})
-                    
-                    -- not necessary 
-                    -- if G.GAME.first_used_hand_level and G.GAME.first_used_hand_level > 0 then
-                    --     level_up_hand(G.deck.cards[1], text, nil, G.GAME.first_used_hand_level)
-                    --     G.GAME.first_used_hand_level = nil
-                    -- end
-                    
-                    -- I dont think we need this, as it appears to just be UI code
-                    -- for i=1, #G.jokers.cards do
-                    --     --calculate the joker effects
-                    --     local effects = eval_card(G.jokers.cards[i], {cardarea = G.jokers, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, before = true})
-                    --     if effects.jokers then
-                    --         card_eval_status_text(G.jokers.cards[i], 'jokers', nil, percent, nil, effects.jokers)
-                    --         percent = percent + percent_delta
-                            
-                    --         -- if effects.jokers.level_up then
-                    --         --     level_up_hand(G.jokers.cards[i], text)
-                    --         -- end
-                    --     end
-                    -- end
-
                     -- this is just for the blind "The Flint" which halves your chips
                     local modded = false
-                    mult, hand_chips, modded = G.GAME.blind:modify_hand(candidate_played, poker_hands, text, mult, hand_chips)
+                    mult, hand_chips, modded = G.GAME.blind:modify_hand(candidatePlayed, poker_hands, text, mult, hand_chips)
+                    
                     -- this is specifically for the "Rich get Richer" achievement
                     -- for now disable
                     -- hand_chips = mod_chips(hand_chips)
                     
+                     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+                    --Played Card Effects
+                    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
                     for i=1, #scoring_hand do
                         --add cards played to list
                         -- if scoring_hand[i].ability.effect ~= 'Stone Card' then 
@@ -678,7 +667,7 @@ table.insert(mods,
                             local reps = {1}
                             
                             --From Red seal
-                            local eval = eval_card(scoring_hand[i], {repetition_only = true,cardarea = G.play, full_hand = candidate_played, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true})
+                            local eval = eval_card(scoring_hand[i], {repetition_only = true,cardarea = G.play, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true})
                             if next(eval) then 
                                 for h = 1, eval.seals.repetitions do
                                     reps[#reps+1] = eval
@@ -687,7 +676,7 @@ table.insert(mods,
                             --From jokers
                             for j=1, #G.jokers.cards do
                                 --calculate the joker effects
-                                local eval = eval_card(G.jokers.cards[j], {cardarea = G.play, full_hand =candidate_played, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], repetition = true})
+                                local eval = eval_card(G.jokers.cards[j], {cardarea = G.play, full_hand =candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], repetition = true})
                                 if next(eval) and eval.jokers then 
                                     for h = 1, eval.jokers.repetitions do
                                         reps[#reps+1] = eval
@@ -701,7 +690,7 @@ table.insert(mods,
                                 -- end
                                 
                                 --calculate the hand effects
-                                local effects = {eval_card(scoring_hand[i], {cardarea = G.play, full_hand = candidate_played, scoring_hand = scoring_hand, poker_hand = text})}
+                                local effects = {eval_card(scoring_hand[i], {cardarea = G.play, full_hand = candidatePlayed, scoring_hand = scoring_hand, poker_hand = text})}
                                 for k=1, #G.jokers.cards do
                                     --calculate the joker individual card effects
                                     local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.play, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], individual = true})
@@ -785,9 +774,127 @@ table.insert(mods,
                         end
                     end
 
+                     --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+                    --In hand Effects
+                    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+                    for i=1, unhighlightedHand do
+                        local reps = {1}
+                        local j = 1
+                        while j <= #reps do
+                            --calculate the hand effects
+                            local effects = {eval_card(unhighlightedHand[i], {cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands})}
+        
+                            for k=1, #G.jokers.cards do
+                                --calculate the joker individual card effects
+                                local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = unhighlightedHand[i], individual = true})
+                                if eval then 
+                                    console.logger:info(string.format("%s had an effect on a held card.", G.jokers.cards[k].ability.name))
+                                    table.insert(effects, eval)
+                                end
+                            end
+        
+                            if reps[j] == 1 then 
+                                --Check for hand doubling
+        
+                                --From Red seal
+                                local eval = eval_card(unhighlightedHand[i], {repetition_only = true,cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true, card_effects = effects})
+                                if next(eval) and (next(effects[1]) or #effects > 1) then 
+                                    for h  = 1, eval.seals.repetitions do
+                                        reps[#reps+1] = eval
+                                    end
+                                end
+        
+                                --From Joker
+                                for j=1, #G.jokers.cards do
+                                    --calculate the joker effects
+                                    local eval = eval_card(G.jokers.cards[j], {cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = unhighlightedHand[i], repetition = true, card_effects = effects})
+                                    if next(eval) then 
+                                        for h  = 1, eval.jokers.repetitions do
+                                            reps[#reps+1] = eval
+                                        end
+                                    end
+                                end
+                            end
+            
+                            for ii = 1, #effects do
+                                --If hold mult added, do hold mult add event and add the mult to the total
+                                if effects[ii].h_mult then
+                                    mult = mod_mult(mult + effects[ii].h_mult)
+                                end
+        
+                                if effects[ii].x_mult then
+                                    mult = mod_mult(mult*effects[ii].x_mult)
+                                end
+                            end
+                            j = j +1
+                        end
+                    end
+                    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+                    --Joker Effects
+                    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+                    for i=1, #G.jokers.cards + #G.consumeables.cards do
+                        local _card = G.jokers.cards[i] or G.consumeables.cards[i - #G.jokers.cards]
+                        console.logger:info(_card.ability.name)
+                        --calculate the joker edition effects
+                        local edition_effects = eval_card(_card, {cardarea = G.jokers, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, edition = true})
+                        if edition_effects.jokers then
+                            console.logger:info("edition effects")
+                            console.logger:info(edition_effects.jokers.chip_mod)
+                            console.logger:info(edition_effects.jokers.mult_mod)
+                            -- console.logger:info(string.format("%s added %d chips and %d mult from edition effects", _card.ability.name, edition_effects.jokers.chip_mod, edition_effects.jokers.mult_mod))
+                            edition_effects.jokers.edition = true
+                            if edition_effects.jokers.chip_mod then
+                                hand_chips = mod_chips(hand_chips + edition_effects.jokers.chip_mod)
+
+                            end
+                            if edition_effects.jokers.mult_mod then
+                                mult = mod_mult(mult + edition_effects.jokers.mult_mod)
+                            end
+                        end
+            
+                        --calculate the joker effects
+                        local effects = eval_card(_card, {cardarea = G.jokers, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, joker_main = true})
+            
+                        --Any Joker effects
+                        if effects.jokers then 
+                            local extras = {mult = false, hand_chips = false}
+                            console.logger:info("local effects")
+                            -- since supernova increments before effect, we need to do this manually
+                            if _card.ability.name == "Supernova" then effects.jokers.mult_mod = effects.jokers.mult_mod + 1 end
+
+                            console.logger:info(effects.jokers.chip_mod)
+                            console.logger:info(effects.jokers.mult_mod)
+
+                            if effects.jokers.mult_mod then mult = mod_mult(mult + effects.jokers.mult_mod);extras.mult = true end
+                            if effects.jokers.chip_mod then hand_chips = mod_chips(hand_chips + effects.jokers.chip_mod);extras.hand_chips = true end
+                            if effects.jokers.Xmult_mod then mult = mod_mult(mult*effects.jokers.Xmult_mod);extras.mult = true  end
+                        end
+            
+                        --Joker on Joker effects
+                        for _, v in ipairs(G.jokers.cards) do
+                            local effect = v:calculate_joker{full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_joker = _card}
+                            if effect then
+                                console.logger:info("joker on joker effects")
+                                console.logger:info(effect.jokers.chip_mod)
+                                console.logger:info(effect.jokers.mult_mod)
+                                local extras = {mult = false, hand_chips = false}
+                                if effect.mult_mod then mult = mod_mult(mult + effect.mult_mod);extras.mult = true end
+                                if effect.chip_mod then hand_chips = mod_chips(hand_chips + effect.chip_mod);extras.hand_chips = true end
+                                if effect.Xmult_mod then mult = mod_mult(mult*effect.Xmult_mod);extras.mult = true  end
+                            end
+                        end
+            
+                        if edition_effects.jokers then
+                            console.logger:info("multi edition")
+                            console.logger:info(edition_effects.jokers.x_mult_mod)
+                            if edition_effects.jokers.x_mult_mod then
+                                mult = mod_mult(mult*edition_effects.jokers.x_mult_mod)
+                            end
+                        end
+                    end
                     console.logger:info(string.format("non-multi chip count is:  %d", hand_chips))
                     console.logger:info(string.format("total multiplier is :  %d", mult))
-                    console.logger:info(string.format("total multiplier is :  %d", mult))
+                    console.logger:info(string.format("total chip value is :  %d", mult * hand_chips))
 
 
 
@@ -809,7 +916,7 @@ table.insert(mods,
         on_disable = function()
         end,
         on_key_pressed = function (key_name)
-            if key_name == "f3" then
+            if key_name == "f2" then
                 console:toggle()
                 return true
             end
