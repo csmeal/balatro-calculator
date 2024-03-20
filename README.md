@@ -1,20 +1,25 @@
-How to install:
+# Simple Calc Mod for Balamod
 
-Balamod must first be installed.
+## How to Install:
 
-Copy simple_calc.lua into your balamod "mods" directory.  
+1. **Install Balamod:** Ensure you have Balamod installed.
+   
+2. **Copy Files:** Copy `simple_calc.lua` into your Balamod "mods" directory.
 
-Start Balatro
+3. **Start Balatro:** Launch Balatro.
 
-When runnning, press the "C" button to enable and disable the score counter
+4. **Enable Score Counter:** While running, press the "C" button to enable or disable the score counter.
 
-Mod should automatically display the calculated score in the top right.
+5. **View Score:** The mod should automatically display the calculated score in the top right corner of your screen.
 
-Note:  Random events (lucky cards, etc.) are calculated only once.  There is no way to know your "average score"
+## Note:
 
-Finally, scaling jokers are not yet implemented, and many tests have not yet been completed.  This is just a prototype.
+- **Random Events:** Random events such as lucky cards are calculated only once. Therefore, there's no way to determine your "average score."
 
-TODO:
-[] Cleanup Code
-[] Beautify the output
-[] Add scaling jokers
+- **Prototype:** Please note that this is just a prototype. Scaling jokers are not yet implemented, and many tests have not been completed.
+
+## TODO:
+
+- [ ] Clean up Code
+- [ ] Beautify the Output
+- [ ] Add Scaling Jokers
