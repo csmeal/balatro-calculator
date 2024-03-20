@@ -1,6 +1,6 @@
 local calculator = {
     debug = false,
-    renderScore = false,
+    renderScore = true,
     currentScore = 0,
     currentHighlighted = {},
     -----------
