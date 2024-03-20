@@ -377,7 +377,7 @@ table.insert(mods,
                 local has_changed = calculator:highlightedHasChanged()
                 if has_changed then calculator:calculateScore() end
 
-                love.graphics.print(string.format("Current played has scores: %s", calculator:formatNumberWithCommas(calculator.currentScore)), 10, 32) 
+                love.graphics.print(string.format("Current played hand scores: %s", calculator:formatNumberWithCommas(calculator.currentScore)), 10, 32) 
                 if has_changed then calculator:logIfDebugOn('has changed', 100, 350) end
                 if not has_changed then calculator:logIfDebugOn('NO CHANGE', 100, 350) end
 
