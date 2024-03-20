@@ -22,4 +22,9 @@
 
 - [ ] Clean up Code
 - [ ] Beautify the Output
-- [ ] Add Scaling Jokers
+- [ ] Add/Test Scaling Jokers
+  - [ ] Square Joker
+  - [ ] Hiker
+  - [ ] Spare Trousers
+  - [ ] Vampire
+  - [ ] Wee Joker  
