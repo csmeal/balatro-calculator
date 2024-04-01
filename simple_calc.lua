@@ -368,6 +368,14 @@ table.insert(mods,
                 replacement = "if not context.calc_only and eights >= self.ability.extra then"
                 inject(file_name, fun_name, to_replace, replacement)
                 
+                to_replace = 'if aces >= 1 and next%(context%.poker_hands%["Straight"]%) then'
+                replacement = 'if not context.calc_only and aces >= 1 and next(context.poker_hands["Straight"]) then'
+                inject(file_name, fun_name, to_replace, replacement)
+
+                to_replace = 'if next%(context%.poker_hands%[self%.ability%.extra%.poker_hand]%) then'
+                replacement = 'if not context.calc_only and next(context.poker_hands[self.ability.extra.poker_hand]) then'
+                inject(file_name, fun_name, to_replace, replacement)
+
                 _RELEASE_MODE = false
             end,
             on_disable = function()
