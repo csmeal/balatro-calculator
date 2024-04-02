@@ -375,7 +375,15 @@ table.insert(mods,
                 to_replace = 'if next%(context%.poker_hands%[self%.ability%.extra%.poker_hand]%) then'
                 replacement = 'if not context.calc_only and next(context.poker_hands[self.ability.extra.poker_hand]) then'
                 inject(file_name, fun_name, to_replace, replacement)
+                
+                to_replace = "if self%.ability%.name == 'Hiker' then"
+                replacement = "if not context.calc_only and self.ability.name == 'Hiker' then"
+                inject(file_name, fun_name, to_replace, replacement)
 
+                to_replace = "if self%.ability%.name == 'Wee Joker' and"
+                replacement = "if not context.calc_only and self.ability.name == 'Wee Joker' and"
+                inject(file_name, fun_name, to_replace, replacement)
+                
                 _RELEASE_MODE = false
             end,
             on_disable = function()
