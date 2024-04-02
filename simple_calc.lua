@@ -362,26 +362,33 @@ table.insert(mods,
                 local replacement = "if not context.calc_only and G.GAME.dollars <= self.ability.extra then"
                 local fun_name = 'Card:calculate_joker'
                 local file_name = 'card.lua'
+                -- Fix for Vagabond
                 inject(file_name, fun_name, to_replace, replacement)
+                
                 
                 to_replace = "if eights >= self%.ability%.extra then"
                 replacement = "if not context.calc_only and eights >= self.ability.extra then"
+                -- Fix for 8 Ball
                 inject(file_name, fun_name, to_replace, replacement)
                 
                 to_replace = 'if aces >= 1 and next%(context%.poker_hands%["Straight"]%) then'
                 replacement = 'if not context.calc_only and aces >= 1 and next(context.poker_hands["Straight"]) then'
+                -- Fix for Seance
                 inject(file_name, fun_name, to_replace, replacement)
 
                 to_replace = 'if next%(context%.poker_hands%[self%.ability%.extra%.poker_hand]%) then'
                 replacement = 'if not context.calc_only and next(context.poker_hands[self.ability.extra.poker_hand]) then'
+                -- Fix for Superposition
                 inject(file_name, fun_name, to_replace, replacement)
                 
                 to_replace = "if self%.ability%.name == 'Hiker' then"
                 replacement = "if not context.calc_only and self.ability.name == 'Hiker' then"
+                -- Fix for Hiker
                 inject(file_name, fun_name, to_replace, replacement)
 
                 to_replace = "if self%.ability%.name == 'Wee Joker' and"
                 replacement = "if not context.calc_only and self.ability.name == 'Wee Joker' and"
+                -- Fix for Wee Joker
                 inject(file_name, fun_name, to_replace, replacement)
                 
                 _RELEASE_MODE = false
