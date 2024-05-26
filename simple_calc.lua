@@ -96,7 +96,7 @@ local calculator = {
                 local reps = {1}
                 
                 --From Red seal
-                local eval = eval_card(scoring_hand[i], {repetition_only = true,cardarea = G.play, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true})
+                local eval = eval_card(scoring_hand[i], {repetition_only = true,cardarea = G.play, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true, calc_only = true})
                 if next(eval) then 
                     for h = 1, eval.seals.repetitions do
                         reps[#reps+1] = eval
@@ -105,7 +105,7 @@ local calculator = {
                 --From jokers
                 for j=1, #G.jokers.cards do
                     --calculate the joker effects
-                    local eval = eval_card(G.jokers.cards[j], {cardarea = G.play, full_hand =candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], repetition = true})
+                    local eval = eval_card(G.jokers.cards[j], {cardarea = G.play, full_hand =candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], repetition = true, calc_only = true})
                     if next(eval) and eval.jokers then 
                         for h = 1, eval.jokers.repetitions do
                             reps[#reps+1] = eval
@@ -119,10 +119,10 @@ local calculator = {
                     -- end
                     
                     --calculate the hand effects
-                    local effects = {eval_card(scoring_hand[i], {cardarea = G.play, full_hand = candidatePlayed, scoring_hand = scoring_hand, poker_hand = text})}
+                    local effects = {eval_card(scoring_hand[i], {cardarea = G.play, full_hand = candidatePlayed, scoring_hand = scoring_hand, poker_hand = text, calc_only = true})}
                     for k=1, #G.jokers.cards do
                         --calculate the joker individual card effects
-                        local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.play, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], individual = true})
+                        local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.play, full_hand = G.play.cards, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = scoring_hand[i], individual = true, calc_only = true})
                         if eval then 
                             table.insert(effects, eval)
                         end
@@ -184,11 +184,11 @@ local calculator = {
             local j = 1
             while j <= #reps do
                 --calculate the hand effects
-                local effects = {eval_card(unhighlightedHand[i], {cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands})}
+                local effects = {eval_card(unhighlightedHand[i], {cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, calc_only = true})}
 
                 for k=1, #G.jokers.cards do
                     --calculate the joker individual card effects
-                    local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = unhighlightedHand[i], individual = true})
+                    local eval = G.jokers.cards[k]:calculate_joker({cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = unhighlightedHand[i], individual = true, calc_only = true})
                     if eval then 
                         table.insert(effects, eval)
                     end
@@ -198,7 +198,7 @@ local calculator = {
                     --Check for hand doubling
 
                     --From Red seal
-                    local eval = eval_card(unhighlightedHand[i], {repetition_only = true,cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true, card_effects = effects})
+                    local eval = eval_card(unhighlightedHand[i], {repetition_only = true,cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, repetition = true, card_effects = effects, calc_only = true})
                     if next(eval) and (next(effects[1]) or #effects > 1) then 
                         for h  = 1, eval.seals.repetitions do
                             reps[#reps+1] = eval
@@ -208,7 +208,7 @@ local calculator = {
                     --From Joker
                     for j=1, #G.jokers.cards do
                         --calculate the joker effects
-                        local eval = eval_card(G.jokers.cards[j], {cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = unhighlightedHand[i], repetition = true, card_effects = effects})
+                        local eval = eval_card(G.jokers.cards[j], {cardarea = G.hand, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_card = unhighlightedHand[i], repetition = true, card_effects = effects, calc_only = true})
                         if next(eval) then 
                             for h  = 1, eval.jokers.repetitions do
                                 reps[#reps+1] = eval
@@ -236,7 +236,7 @@ local calculator = {
         for i=1, #G.jokers.cards + #G.consumeables.cards do
             local _card = G.jokers.cards[i] or G.consumeables.cards[i - #G.jokers.cards]
             --calculate the joker edition effects
-            local edition_effects = eval_card(_card, {cardarea = G.jokers, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, edition = true})
+            local edition_effects = eval_card(_card, {cardarea = G.jokers, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, edition = true, calc_only = true})
             if edition_effects.jokers then
                 -- console.logger:info(string.format("%s added %d chips and %d mult from edition effects", _card.ability.name, edition_effects.jokers.chip_mod, edition_effects.jokers.mult_mod))
                 edition_effects.jokers.edition = true
@@ -250,7 +250,7 @@ local calculator = {
             end
 
             --calculate the joker effects
-            local effects = eval_card(_card, {cardarea = G.jokers, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, joker_main = true})
+            local effects = eval_card(_card, {cardarea = G.jokers, full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, joker_main = true, calc_only = true})
 
             --Any Joker effects
             if effects.jokers then 
@@ -265,7 +265,7 @@ local calculator = {
 
             --Joker on Joker effects
             for _, v in ipairs(G.jokers.cards) do
-                local effect = v:calculate_joker{full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_joker = _card}
+                local effect = v:calculate_joker{full_hand = candidatePlayed, scoring_hand = scoring_hand, scoring_name = text, poker_hands = poker_hands, other_joker = _card, calc_only = true}
                 if effect then
                     local extras = {mult = false, hand_chips = false}
                     if effect.mult_mod then mult = mod_mult(mult + effect.mult_mod);extras.mult = true end
@@ -358,6 +358,48 @@ table.insert(mods,
             },
             enabled = true,
             on_enable = function()
+                local to_replace = "if G%.GAME%.dollars <= self%.ability%.extra then"
+                local replacement = "if not context.calc_only and G.GAME.dollars <= self.ability.extra then"
+                local fun_name = 'Card:calculate_joker'
+                local file_name = 'card.lua'
+                -- Fix for Vagabond
+                inject(file_name, fun_name, to_replace, replacement)
+                
+                to_replace = 'if aces >= 1 and next%(context%.poker_hands%["Straight"]%) then'
+                replacement = 'if not context.calc_only and aces >= 1 and next(context.poker_hands["Straight"]) then'
+                -- Fix for Seance
+                inject(file_name, fun_name, to_replace, replacement)
+
+                to_replace = 'if next%(context%.poker_hands%[self%.ability%.extra%.poker_hand]%) then'
+                replacement = 'if not context.calc_only and next(context.poker_hands[self.ability.extra.poker_hand]) then'
+                -- Fix for Superposition
+                inject(file_name, fun_name, to_replace, replacement)
+                
+                to_replace = "if self%.ability%.name == 'Hiker' then"
+                replacement = "if not context.calc_only and self.ability.name == 'Hiker' then"
+                -- Fix for Hiker
+                inject(file_name, fun_name, to_replace, replacement)
+
+                to_replace = "if self%.ability%.name == \'Lucky Cat\' and context%.other_card%.lucky_trigger and not context%.blueprint then"
+                replacement = "if not context.calc_only and self.ability.name == 'Lucky Cat' and context.other_card.lucky_trigger and not context.blueprint then"
+                -- Fix for Lucky Cat
+                inject(file_name, fun_name, to_replace, replacement)
+
+                to_replace = "if self%.ability%.name == 'Wee Joker' and"
+                replacement = "if not context.calc_only and self.ability.name == 'Wee Joker' and"
+                -- Fix for Wee Joker
+                inject(file_name, fun_name, to_replace, replacement)
+
+                to_replace = "if self%.ability%.name == 'Matador' then"
+                replacement = "if not context.calc_only and self.ability.name == 'Matador' then"
+                -- Fix for Matador
+                inject(file_name, fun_name, to_replace, replacement)
+                
+                to_replace = "if self%.ability%.name == '8 Ball'"
+                replacement = "if not context.calc_only and self.ability.name == '8 Ball'"
+                -- Fix for 8 Ball
+                inject(file_name, fun_name, to_replace, replacement)
+                
                 _RELEASE_MODE = false
             end,
             on_disable = function()
