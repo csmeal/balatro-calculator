@@ -365,12 +365,6 @@ table.insert(mods,
                 -- Fix for Vagabond
                 inject(file_name, fun_name, to_replace, replacement)
                 
-                
-                to_replace = "if eights >= self%.ability%.extra then"
-                replacement = "if not context.calc_only and eights >= self.ability.extra then"
-                -- Fix for 8 Ball
-                inject(file_name, fun_name, to_replace, replacement)
-                
                 to_replace = 'if aces >= 1 and next%(context%.poker_hands%["Straight"]%) then'
                 replacement = 'if not context.calc_only and aces >= 1 and next(context.poker_hands["Straight"]) then'
                 -- Fix for Seance
@@ -386,9 +380,24 @@ table.insert(mods,
                 -- Fix for Hiker
                 inject(file_name, fun_name, to_replace, replacement)
 
+                to_replace = "if self%.ability%.name == \'Lucky Cat\' and context%.other_card%.lucky_trigger and not context%.blueprint then"
+                replacement = "if not context.calc_only and self.ability.name == 'Lucky Cat' and context.other_card.lucky_trigger and not context.blueprint then"
+                -- Fix for Lucky Cat
+                inject(file_name, fun_name, to_replace, replacement)
+
                 to_replace = "if self%.ability%.name == 'Wee Joker' and"
                 replacement = "if not context.calc_only and self.ability.name == 'Wee Joker' and"
                 -- Fix for Wee Joker
+                inject(file_name, fun_name, to_replace, replacement)
+
+                to_replace = "if self%.ability%.name == 'Matador' then"
+                replacement = "if not context.calc_only and self.ability.name == 'Matador' then"
+                -- Fix for Matador
+                inject(file_name, fun_name, to_replace, replacement)
+                
+                to_replace = "if self%.ability%.name == '8 Ball'"
+                replacement = "if not context.calc_only and self.ability.name == '8 Ball'"
+                -- Fix for 8 Ball
                 inject(file_name, fun_name, to_replace, replacement)
                 
                 _RELEASE_MODE = false
